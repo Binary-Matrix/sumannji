@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ConstellationIntro, type CursorStyle } from "@/components/ConstellationIntro";
+import { ConstellationBg } from "@/components/ConstellationBg";
 import { CursorFx } from "@/components/CursorFx";
 import { FxLayer } from "@/components/FxLayer";
 import { LoveLetter } from "@/components/LoveLetter";
@@ -11,6 +12,7 @@ import { Guruji } from "@/components/Guruji";
 import { Games } from "@/components/Games";
 import { Work } from "@/components/Work";
 import { LiveHall } from "@/components/LiveHall";
+import { ContactSection } from "@/components/ContactSection";
 import { Footer } from "@/components/Footer";
 import { ScoreProvider, useScore } from "@/lib/score";
 import { sfx } from "@/lib/sfx";
@@ -28,7 +30,7 @@ const Nav = () => {
   return (
     <header className="fixed inset-x-0 top-0 z-40 glass">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
-        <a href="#top" className="font-fancy text-xl" onClick={sfx.click}>
+        <a href="#top" className="text-xl font-bold" onClick={sfx.click}>
           <span className="text-ember">Suman</span> Neupane
         </a>
         <nav className="hidden gap-1 sm:flex">
@@ -37,13 +39,13 @@ const Nav = () => {
               key={i.id}
               href={`#${i.id}`}
               onClick={sfx.tap}
-              className="rounded-full px-3 py-1.5 font-mono text-xs text-muted-foreground transition hover:bg-secondary/50 hover:text-foreground"
+              className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-secondary/50 hover:text-foreground"
             >
               {i.label}
             </a>
           ))}
         </nav>
-        <div className="glass rounded-full px-3 py-1 font-mono text-[11px]">
+        <div className="glass rounded-full px-3 py-1 text-[11px] font-medium">
           <span className="text-muted-foreground">pts:</span> <span className="text-ember">{score}</span>
         </div>
       </div>
@@ -63,6 +65,7 @@ const Inner = ({ visitorName }: { visitorName: string }) => (
       <Games />
       <Work />
       <LiveHall visitorName={visitorName} />
+      <ContactSection />
     </main>
     <Footer />
   </>
@@ -85,6 +88,7 @@ const Index = () => {
     <ScoreProvider>
       <div id="top" className="min-h-screen bg-background text-foreground">
         <CursorFx style={cursor} />
+        <ConstellationBg />
         <FxLayer />
         <LoveLetter open={letterOpen} onClose={() => setLetterOpen(false)} />
         {!entered && (

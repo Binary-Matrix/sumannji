@@ -12,14 +12,11 @@ async function streamChat({
   try {
     const resp = await fetch(CHAT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${PUB_KEY}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${PUB_KEY}` },
       body: JSON.stringify({ messages }),
     });
-    if (resp.status === 429) return onError("⏱️ slow down — too many requests. try again in a moment.");
-    if (resp.status === 402) return onError("💳 AI credits exhausted. ask Suman to top up.");
+    if (resp.status === 429) return onError("⏱️ slow down — too many requests.");
+    if (resp.status === 402) return onError("💳 AI credits exhausted.");
     if (!resp.ok || !resp.body) return onError("⚠️ chat failed to start.");
 
     const reader = resp.body.getReader();
@@ -54,6 +51,59 @@ async function streamChat({
   }
 }
 
+const VoiceButton = ({ onTranscript, disabled }: { onTranscript: (text: string) => void; disabled: boolean }) => {
+  const [recording, setRecording] = useState(false);
+  const mediaRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const toggle = async () => {
+    if (recording && mediaRef.current) {
+      mediaRef.current.stop();
+      setRecording(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => chunksRef.current.push(e.data);
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        // For now, we indicate voice was recorded as text
+        onTranscript("[voice message recorded]");
+      };
+      recorder.start();
+      mediaRef.current = recorder;
+      setRecording(true);
+      sfx.click();
+    } catch {
+      // Mic not available
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={disabled}
+      className={`rounded-full px-3 py-1.5 transition disabled:opacity-40 ${recording ? "bg-destructive/70 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+      title={recording ? "Stop recording" : "Voice message"}
+    >
+      <svg viewBox="0 0 20 20" className="h-4 w-4">
+        {recording ? (
+          <rect x="5" y="5" width="10" height="10" rx="2" fill="currentColor" />
+        ) : (
+          <>
+            <rect x="7" y="2" width="6" height="10" rx="3" fill="currentColor" />
+            <path d="M5 9a7 7 0 0014 0" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <line x1="12" y1="16" x2="12" y2="18" stroke="currentColor" strokeWidth="1.5" />
+          </>
+        )}
+      </svg>
+    </button>
+  );
+};
+
 export const Shell = ({ visitorName }: { visitorName?: string }) => {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([
@@ -67,7 +117,6 @@ export const Shell = ({ visitorName }: { visitorName?: string }) => {
     scroll.current?.scrollTo({ top: scroll.current.scrollHeight, behavior: "smooth" });
   }, [msgs, open]);
 
-  // open via hash navigation #shell
   useEffect(() => {
     const onHash = () => { if (window.location.hash === "#shell") setOpen(true); };
     onHash();
@@ -99,47 +148,45 @@ export const Shell = ({ visitorName }: { visitorName?: string }) => {
     });
   };
 
+  const handleVoice = (text: string) => {
+    setInput(text);
+  };
+
   return (
     <>
-      {/* Floating tab / launcher anchor — Hero links to #shell to open */}
       <section id="shell" className="border-t border-border/40 px-6 py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted-foreground">01 · parth</p>
-          <h2 className="mt-2 font-display text-4xl sm:text-5xl">Talk to the system.</h2>
-          <p className="mt-3 text-muted-foreground">Parth is your helper in this site if you want to know anything about me.</p>
+          <p className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">01 · parth</p>
+          <h2 className="mt-2 text-4xl font-bold sm:text-5xl">Talk to the system.</h2>
+          <p className="mt-3 text-muted-foreground">Parth is your helper — ask anything about Suman.</p>
           <button
             onClick={() => { setOpen(true); sfx.pop(); }}
-            className="mt-6 lift-3d rounded-full bg-ember px-6 py-3 font-medium text-primary-foreground shadow-ember transition hover:scale-105"
+            className="mt-6 rounded-full bg-ember px-6 py-3 font-semibold text-primary-foreground shadow-ember transition hover:scale-105"
           >
             ✨ Talk with Parth
           </button>
         </div>
       </section>
 
-      {/* Persistent floating launcher button — hovers everywhere on the page */}
       {!open && (
         <button
           onClick={() => { setOpen(true); sfx.pop(); }}
-          className="glass-strong fixed bottom-6 right-6 z-[120] grid h-14 w-14 place-items-center rounded-full text-xl font-space shadow-ember transition hover:scale-110"
+          className="glass-strong fixed bottom-6 right-6 z-[120] grid h-14 w-14 place-items-center rounded-full text-xl font-bold shadow-ember transition hover:scale-110"
           aria-label="open parth"
           title="Talk with Parth"
         >P</button>
       )}
 
-      {/* Floating chat panel */}
       {open && (
         <div className="fixed inset-0 z-[130] flex items-end justify-end p-4 sm:items-center sm:justify-end sm:p-6">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
           <div className="glass-strong relative z-10 flex h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-3xl">
             <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-ember font-space text-sm text-primary-foreground shadow-ember">P</span>
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-ember text-sm font-bold text-primary-foreground shadow-ember">P</span>
                 <div>
-                  <p className="font-display text-base">Parth</p>
-                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <p className="text-base font-semibold">Parth</p>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full neon-dot align-middle" />
                     online · at your service
                   </p>
@@ -147,7 +194,7 @@ export const Shell = ({ visitorName }: { visitorName?: string }) => {
               </div>
               <button
                 onClick={() => { sfx.click(); setOpen(false); }}
-                className="glass rounded-full px-3 py-1 font-mono text-xs text-muted-foreground hover:text-foreground"
+                className="glass rounded-full px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
               >close ✕</button>
             </div>
 
@@ -167,17 +214,18 @@ export const Shell = ({ visitorName }: { visitorName?: string }) => {
             </div>
 
             <form onSubmit={send} className="border-t border-border/40 p-3">
-              <div className="glass flex items-center gap-2 rounded-full p-1.5">
+              <div className="glass flex items-center gap-1 rounded-full p-1.5">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="ask Parth anything…"
                   className="flex-1 bg-transparent px-3 py-1.5 text-sm outline-none"
                 />
+                <VoiceButton onTranscript={handleVoice} disabled={busy} />
                 <button
                   type="submit"
                   disabled={busy || !input.trim()}
-                  className="rounded-full bg-ember px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-ember disabled:opacity-40"
+                  className="rounded-full bg-ember px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-ember disabled:opacity-40"
                 >{busy ? "…" : "send"}</button>
               </div>
             </form>
