@@ -72,12 +72,13 @@
     background-image: var(--gradient-warm);
     background-attachment: fixed;
   }
-  h1, h2, h3 { font-family: 'Fraunces', serif; letter-spacing: -0.02em; }
+  h1, h2, h3 { font-family: 'Inter', system-ui, sans-serif; letter-spacing: -0.02em; font-weight: 700; }
   .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
-  .font-script { font-family: 'Caveat', cursive; }
-  .font-fancy { font-family: 'Pacifico', cursive; }
-  .font-arcade { font-family: 'Bungee Shade', cursive; letter-spacing: 0.02em; }
-  .font-space { font-family: 'Orbitron', sans-serif; letter-spacing: 0.08em; }
+  .font-script { font-family: 'Inter', system-ui, sans-serif; font-style: italic; }
+  .font-fancy { font-family: 'Inter', system-ui, sans-serif; font-weight: 700; }
+  .font-arcade { font-family: 'Inter', system-ui, sans-serif; font-weight: 800; letter-spacing: 0.02em; }
+  .font-space { font-family: 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.04em; }
+  .font-display { font-family: 'Inter', system-ui, sans-serif; font-weight: 700; }
 }
 
 @layer utilities {
