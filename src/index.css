@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Cocoa & Ember + Apple Glass — warm, dark, transparent, tactile */
+@layer base {
+  :root {
+    --background: 28 22% 8%;
+    --foreground: 35 45% 92%;
+
+    --card: 26 18% 11%;
+    --card-foreground: 35 45% 92%;
+
+    --popover: 26 18% 11%;
+    --popover-foreground: 35 45% 92%;
+
+    --primary: 22 88% 58%;
+    --primary-foreground: 28 22% 8%;
+    --primary-glow: 32 95% 65%;
+
+    --secondary: 28 15% 16%;
+    --secondary-foreground: 35 45% 92%;
+
+    --muted: 26 14% 14%;
+    --muted-foreground: 32 18% 62%;
+
+    --accent: 38 78% 60%;
+    --accent-foreground: 28 22% 8%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 35 45% 92%;
+
+    --border: 28 18% 18%;
+    --input: 28 18% 18%;
+    --ring: 22 88% 58%;
+
+    --neon: 142 85% 55%; /* online green */
+
+    --radius: 0.75rem;
+
+    --gradient-ember: linear-gradient(135deg, hsl(22 88% 58%), hsl(38 95% 62%));
+    --gradient-cocoa: linear-gradient(180deg, hsl(28 22% 8%), hsl(22 28% 5%));
+    --gradient-warm: radial-gradient(circle at 30% 20%, hsl(22 88% 58% / 0.25), transparent 60%),
+                     radial-gradient(circle at 80% 80%, hsl(38 78% 60% / 0.18), transparent 55%);
+    --gradient-party: radial-gradient(circle at 20% 30%, hsl(290 90% 60% / 0.35), transparent 55%),
+                      radial-gradient(circle at 80% 70%, hsl(180 90% 55% / 0.25), transparent 55%),
+                      radial-gradient(circle at 50% 50%, hsl(45 100% 60% / 0.18), transparent 60%);
+
+    --shadow-ember: 0 20px 60px -20px hsl(22 88% 58% / 0.45);
+    --shadow-soft: 0 10px 40px -12px hsl(0 0% 0% / 0.6);
+    --shadow-glass: 0 8px 32px 0 hsl(0 0% 0% / 0.45), inset 0 1px 0 hsl(35 45% 92% / 0.08);
+
+    --sidebar-background: 26 18% 11%;
+    --sidebar-foreground: 35 45% 92%;
+    --sidebar-primary: 22 88% 58%;
+    --sidebar-primary-foreground: 28 22% 8%;
+    --sidebar-accent: 28 15% 16%;
+    --sidebar-accent-foreground: 35 45% 92%;
+    --sidebar-border: 28 18% 18%;
+    --sidebar-ring: 22 88% 58%;
+  }
+
+  .dark { color-scheme: dark; }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-image: var(--gradient-warm);
+    background-attachment: fixed;
+  }
+  h1, h2, h3 { font-family: 'Fraunces', serif; letter-spacing: -0.02em; }
+  .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .font-script { font-family: 'Caveat', cursive; }
+  .font-fancy { font-family: 'Pacifico', cursive; }
+  .font-arcade { font-family: 'Bungee Shade', cursive; letter-spacing: 0.02em; }
+  .font-space { font-family: 'Orbitron', sans-serif; letter-spacing: 0.08em; }
+}
+
+@layer utilities {
+  .text-ember { background: var(--gradient-ember); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .bg-ember { background: var(--gradient-ember); }
+  .shadow-ember { box-shadow: var(--shadow-ember); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-glass { box-shadow: var(--shadow-glass); }
+  .glow-ring { box-shadow: 0 0 0 1px hsl(var(--primary) / 0.3), 0 0 30px hsl(var(--primary) / 0.25); }
+
+  /* Apple-style frosted glass surfaces — transparent vibe, no color change */
+  .glass {
+    background: linear-gradient(180deg, hsl(35 45% 92% / 0.06), hsl(35 45% 92% / 0.02));
+    backdrop-filter: blur(22px) saturate(1.4);
+    -webkit-backdrop-filter: blur(22px) saturate(1.4);
+    border: 1px solid hsl(35 45% 92% / 0.10);
+    box-shadow: var(--shadow-glass);
+  }
+  .glass-strong {
+    background: linear-gradient(180deg, hsl(35 45% 92% / 0.10), hsl(35 45% 92% / 0.04));
+    backdrop-filter: blur(30px) saturate(1.5);
+    -webkit-backdrop-filter: blur(30px) saturate(1.5);
+    border: 1px solid hsl(35 45% 92% / 0.14);
+    box-shadow: var(--shadow-glass);
+  }
+  .neon-dot {
+    background: hsl(var(--neon));
+    box-shadow: 0 0 10px hsl(var(--neon) / 0.9), 0 0 22px hsl(var(--neon) / 0.6);
+  }
+}
+
+/* Constellation intro */
+@keyframes twinkle { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+@keyframes drawLine { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+@keyframes nameFade {
+  0% { opacity: 0; transform: translateY(12px); letter-spacing: -0.02em; }
+  25% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 1; letter-spacing: 0.05em; }
+  100% { opacity: 0; letter-spacing: 0.4em; transform: translateY(-6px); }
+}
+@keyframes pressGlow { 0%,100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.6); } 50% { box-shadow: 0 0 80px 20px hsl(var(--primary) / 0.5); } }
+
+/* Festive gravity: rises up from the bottom, then falls back down */
+@keyframes riseAndFall {
+  0% { transform: translate(var(--xs, 0), 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  45% { transform: translate(var(--xm, 0), calc(-1 * var(--peak, 70vh))) rotate(180deg); opacity: 1; }
+  100% { transform: translate(var(--xe, 0), 10vh) rotate(540deg); opacity: 0; }
+}
+@keyframes confettiRiseFall {
+  0% { transform: translate(var(--xs, 0), 0) rotate(0deg); opacity: 0; }
+  8% { opacity: 1; }
+  40% { transform: translate(var(--xm, 0), calc(-1 * var(--peak, 65vh))) rotate(360deg); }
+  100% { transform: translate(var(--xe, 0), 8vh) rotate(900deg); opacity: 0; }
+}
+@keyframes warmGlow { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes pulseSlow { 0%,100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.08); opacity: 1; } }
+@keyframes neonPulse { 0%,100% { box-shadow: 0 0 8px hsl(var(--neon) / 0.8), 0 0 18px hsl(var(--neon) / 0.5); } 50% { box-shadow: 0 0 14px hsl(var(--neon) / 1), 0 0 30px hsl(var(--neon) / 0.7); } }
+
+.animate-twinkle { animation: twinkle 2s ease-in-out infinite; }
+.animate-fade-up { animation: fadeUp 0.6s ease-out both; }
+.animate-press-glow { animation: pressGlow 1.2s ease-in-out infinite; }
+.animate-pulse-slow { animation: pulseSlow 3s ease-in-out infinite; }
+.animate-neon { animation: neonPulse 2s ease-in-out infinite; }
+
+/* Cursor surprise */
+@keyframes sparkOut {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); opacity: 0; }
+}
+.cursor-spark {
+  position: fixed;
+  width: 6px; height: 6px;
+  border-radius: 9999px;
+  pointer-events: none;
+  box-shadow: 0 0 10px hsl(var(--primary));
+  animation: sparkOut 0.85s ease-out forwards;
+  transform: translate(-50%, -50%);
+  z-index: 9998;
+}
+@keyframes cursorBurst {
+  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7); }
+  100% { box-shadow: 0 0 0 22px hsl(var(--primary) / 0); }
+}
+.cursor-burst { animation: cursorBurst 0.5s ease-out; }
+
+/* Love letter kiss pop */
+@keyframes kissPop {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  55% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 0.95; }
+}
+
+a, button, [role="button"], input, textarea { cursor: none; }
+@media (pointer: coarse) {
+  html, a, button, [role="button"], input, textarea { cursor: auto !important; }
+}
+
+/* 3D tilt — site-wide */
+.tilt-3d { transform-style: preserve-3d; transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms; will-change: transform; }
+.tilt-3d:hover { transform: perspective(900px) rotateX(var(--ty,0deg)) rotateY(var(--tx,0deg)) translateZ(6px); box-shadow: 0 30px 60px -25px hsl(22 88% 58% / 0.45); }
+.lift-3d { transition: transform .25s cubic-bezier(.2,.9,.2,1), box-shadow .25s; }
+.lift-3d:hover { transform: perspective(800px) translateZ(8px) translateY(-3px); box-shadow: 0 25px 50px -20px hsl(22 88% 58% / 0.5); }
+
+/* Spaceship intro */
+@keyframes vibrate { 0%,100% { transform: translate(0,0); } 25% { transform: translate(-1px,1px); } 50% { transform: translate(1px,-1px); } 75% { transform: translate(-1px,-1px); } }
+.animate-vibrate { animation: vibrate .12s linear infinite; }
+@keyframes starfield { from { transform: translateZ(0); } to { transform: translateZ(1px); } }
+@keyframes warpStar {
+  0% { transform: translate(0,0) scale(.3); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(var(--sx,0), var(--sy,0)) scale(1.5); opacity: 0; }
+}
+.warp-star { position: absolute; width: 3px; height: 3px; border-radius: 9999px; background: hsl(38 95% 75%); box-shadow: 0 0 10px hsl(22 88% 65%); animation: warpStar 1.4s linear infinite; }
+
+/* Disc spin (DJ) */
+@keyframes spinDisc { to { transform: rotate(360deg); } }
+.animate-spin-disc { animation: spinDisc 6s linear infinite; }
+
+/* Eye-catch hero name */
+@keyframes hueShift { 0%,100% { filter: hue-rotate(0deg); } 50% { filter: hue-rotate(20deg); } }
+.animate-hue { animation: hueShift 6s ease-in-out infinite; }
