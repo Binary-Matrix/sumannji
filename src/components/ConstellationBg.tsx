@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-/** Persistent constellation background that reacts to mouse movement */
+/** Persistent constellation background — connections appear around cursor */
 export const ConstellationBg = () => {
-  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
+  const [mouse, setMouse] = useState({ x: -1, y: -1 });
 
   const stars = useMemo(
     () =>
-      Array.from({ length: 80 }, () => ({
+      Array.from({ length: 90 }, () => ({
         x: Math.random(),
         y: Math.random(),
-        r: 0.3 + Math.random() * 0.8,
+        r: 0.3 + Math.random() * 0.6,
         d: Math.random() * 4,
       })),
     []
@@ -22,16 +22,25 @@ export const ConstellationBg = () => {
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
+  // Only draw lines near mouse cursor — creates the "connecting when hovering" effect
   const lines: Array<{ a: number; b: number; opacity: number }> = [];
-  const maxDist = 0.15;
-  for (let i = 0; i < stars.length; i++) {
-    for (let j = i + 1; j < stars.length; j++) {
-      const d = Math.hypot(stars[i].x - stars[j].x, stars[i].y - stars[j].y);
-      if (d < maxDist) {
-        const mid = { x: (stars[i].x + stars[j].x) / 2, y: (stars[i].y + stars[j].y) / 2 };
-        const cursorBoost = 1 - Math.min(1, Math.hypot(mid.x - mouse.x, mid.y - mouse.y) * 3.5);
-        if (cursorBoost > 0.05) {
-          lines.push({ a: i, b: j, opacity: cursorBoost * 0.2 });
+  if (mouse.x >= 0) {
+    const connectRadius = 0.18; // how far from cursor stars connect
+    const maxDist = 0.12; // max distance between two stars to form a line
+
+    for (let i = 0; i < stars.length; i++) {
+      const distToCursor = Math.hypot(stars[i].x - mouse.x, stars[i].y - mouse.y);
+      if (distToCursor > connectRadius) continue;
+
+      for (let j = i + 1; j < stars.length; j++) {
+        const distToCursorJ = Math.hypot(stars[j].x - mouse.x, stars[j].y - mouse.y);
+        if (distToCursorJ > connectRadius) continue;
+
+        const d = Math.hypot(stars[i].x - stars[j].x, stars[i].y - stars[j].y);
+        if (d < maxDist) {
+          const avgDist = (distToCursor + distToCursorJ) / 2;
+          const brightness = 1 - avgDist / connectRadius;
+          lines.push({ a: i, b: j, opacity: brightness * 0.3 });
         }
       }
     }
@@ -56,18 +65,22 @@ export const ConstellationBg = () => {
           />
         );
       })}
-      {stars.map((s, i) => (
-        <circle
-          key={i}
-          cx={s.x * 100}
-          cy={s.y * 100}
-          r={s.r * 0.15}
-          fill="hsl(var(--foreground))"
-          opacity={0.15 + (1 - Math.min(1, Math.hypot(s.x - mouse.x, s.y - mouse.y) * 3)) * 0.3}
-          className="animate-twinkle"
-          style={{ animationDelay: `${s.d}s` }}
-        />
-      ))}
+      {stars.map((s, i) => {
+        const dist = mouse.x >= 0 ? Math.hypot(s.x - mouse.x, s.y - mouse.y) : 1;
+        const glow = Math.max(0, 1 - dist * 4);
+        return (
+          <circle
+            key={i}
+            cx={s.x * 100}
+            cy={s.y * 100}
+            r={s.r * 0.14 + glow * 0.1}
+            fill="hsl(var(--foreground))"
+            opacity={0.12 + glow * 0.5}
+            className="animate-twinkle"
+            style={{ animationDelay: `${s.d}s` }}
+          />
+        );
+      })}
     </svg>
   );
 };
