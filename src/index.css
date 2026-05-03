@@ -212,3 +212,29 @@ a, button, [role="button"], input, textarea { cursor: none; }
 /* Eye-catch hero name */
 @keyframes hueShift { 0%,100% { filter: hue-rotate(0deg); } 50% { filter: hue-rotate(20deg); } }
 .animate-hue { animation: hueShift 6s ease-in-out infinite; }
+
+/* Orb pulse glow */
+@keyframes orbPulse {
+  0%, 100% { box-shadow: 0 0 60px 20px hsla(22, 88%, 58%, 0.3), 0 0 120px 40px hsla(22, 88%, 58%, 0.1); }
+  50% { box-shadow: 0 0 80px 30px hsla(22, 88%, 58%, 0.45), 0 0 150px 50px hsla(22, 88%, 58%, 0.15); }
+}
+
+/* Fizz particles going up */
+@keyframes fizzUp {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  10% { opacity: 0.6; }
+  80% { opacity: 0.3; }
+  100% { transform: translateY(-100vh) scale(0.2); opacity: 0; }
+}
+
+/* Intro welcome reveal */
+@keyframes welcomeReveal {
+  0% { opacity: 0; transform: perspective(900px) rotateX(10deg) translateY(40px) scale(0.9); }
+  100% { opacity: 1; transform: perspective(900px) rotateX(0) translateY(0) scale(1); }
+}
+
+/* Intro fade up */
+@keyframes introFadeUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
