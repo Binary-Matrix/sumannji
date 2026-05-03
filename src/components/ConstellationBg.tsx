@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-/** Persistent constellation background — connections appear around cursor */
+/** Persistent constellation background — visible at 30-45% base, 70% on hover */
 export const ConstellationBg = () => {
   const [mouse, setMouse] = useState({ x: -1, y: -1 });
 
@@ -22,12 +22,11 @@ export const ConstellationBg = () => {
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
-  // Only draw lines near mouse cursor — creates the "connecting when hovering" effect
+  const connectRadius = 0.2;
+  const maxDist = 0.14;
   const lines: Array<{ a: number; b: number; opacity: number }> = [];
-  if (mouse.x >= 0) {
-    const connectRadius = 0.18; // how far from cursor stars connect
-    const maxDist = 0.12; // max distance between two stars to form a line
 
+  if (mouse.x >= 0) {
     for (let i = 0; i < stars.length; i++) {
       const distToCursor = Math.hypot(stars[i].x - mouse.x, stars[i].y - mouse.y);
       if (distToCursor > connectRadius) continue;
@@ -40,7 +39,7 @@ export const ConstellationBg = () => {
         if (d < maxDist) {
           const avgDist = (distToCursor + distToCursorJ) / 2;
           const brightness = 1 - avgDist / connectRadius;
-          lines.push({ a: i, b: j, opacity: brightness * 0.3 });
+          lines.push({ a: i, b: j, opacity: brightness * 0.35 });
         }
       }
     }
@@ -68,6 +67,9 @@ export const ConstellationBg = () => {
       {stars.map((s, i) => {
         const dist = mouse.x >= 0 ? Math.hypot(s.x - mouse.x, s.y - mouse.y) : 1;
         const glow = Math.max(0, 1 - dist * 4);
+        // Base 30-45% opacity, up to 70% on hover
+        const baseOpacity = 0.3 + Math.random() * 0.15;
+        const finalOpacity = baseOpacity + glow * 0.4;
         return (
           <circle
             key={i}
@@ -75,7 +77,7 @@ export const ConstellationBg = () => {
             cy={s.y * 100}
             r={s.r * 0.14 + glow * 0.1}
             fill="hsl(var(--foreground))"
-            opacity={0.12 + glow * 0.5}
+            opacity={Math.min(0.7, finalOpacity)}
             className="animate-twinkle"
             style={{ animationDelay: `${s.d}s` }}
           />

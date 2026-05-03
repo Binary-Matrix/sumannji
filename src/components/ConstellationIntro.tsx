@@ -6,12 +6,20 @@ export type CursorStyle = "ember" | "comet" | "ring" | "crosshair";
 
 const CURSOR_OPTIONS: { id: CursorStyle; label: string; icon: JSX.Element }[] = [
   {
+    id: "comet",
+    label: "default",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5">
+        <path d="M4 4l7 17 2-7 7-2L4 4z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     id: "ember",
     label: "circle",
     icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5">
-        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.2" />
-        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+      <svg viewBox="0 0 24 24" className="h-4 w-4">
+        <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.7" />
       </svg>
     ),
   },
@@ -20,27 +28,18 @@ const CURSOR_OPTIONS: { id: CursorStyle; label: string; icon: JSX.Element }[] = 
     label: "crosshair",
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5">
-        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1" />
-        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="1" />
-        <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" strokeWidth="0.8" />
+        <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="1" />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
       </svg>
     ),
   },
   {
     id: "ring",
-    label: "arrow",
+    label: "cross",
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5">
-        <path d="M5 3l14 9-14 9V3z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    id: "comet",
-    label: "default",
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5">
-        <path d="M4 4l7 17 2-7 7-2L4 4z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1.2" />
+        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="1.2" />
       </svg>
     ),
   },
@@ -53,7 +52,7 @@ export const ConstellationIntro = ({
 }) => {
   const [name, setName] = useState("");
   const [cursor, setCursor] = useState<CursorStyle>("ember");
-  const [phase, setPhase] = useState<"entry" | "welcome" | "exit">("entry");
+  const [phase, setPhase] = useState<"cursor" | "name" | "welcome" | "exit">("cursor");
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
   const [opacity, setOpacity] = useState(1);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -62,17 +61,17 @@ export const ConstellationIntro = ({
 
   const stars = useMemo(
     () =>
-      Array.from({ length: 120 }, () => ({
+      Array.from({ length: 100 }, () => ({
         x: Math.random(),
         y: Math.random(),
-        r: 0.4 + Math.random() * 0.8,
+        r: 0.3 + Math.random() * 0.6,
         phase: Math.random() * Math.PI * 2,
         speed: 0.3 + Math.random() * 0.7,
       })),
     []
   );
 
-  // Canvas-based constellation for smoothness
+  // Canvas constellation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -97,15 +96,15 @@ export const ConstellationIntro = ({
       for (let i = 0; i < stars.length; i++) {
         const si = stars[i];
         const dCi = Math.hypot(si.x - mx, si.y - my);
-        if (dCi > 0.2) continue;
+        if (dCi > 0.22) continue;
         for (let j = i + 1; j < stars.length; j++) {
           const sj = stars[j];
           const dCj = Math.hypot(sj.x - mx, sj.y - my);
-          if (dCj > 0.2) continue;
+          if (dCj > 0.22) continue;
           const d = Math.hypot(si.x - sj.x, si.y - sj.y);
-          if (d < 0.12) {
+          if (d < 0.14) {
             const avg = (dCi + dCj) / 2;
-            const alpha = (1 - avg / 0.2) * 0.35;
+            const alpha = (1 - avg / 0.22) * 0.4;
             ctx.beginPath();
             ctx.moveTo(si.x * w, si.y * h);
             ctx.lineTo(sj.x * w, sj.y * h);
@@ -116,13 +115,14 @@ export const ConstellationIntro = ({
         }
       }
 
-      // Draw stars
+      // Draw stars with base visibility
       for (const s of stars) {
         const dist = Math.hypot(s.x - mx, s.y - my);
         const glow = Math.max(0, 1 - dist * 4);
         const twinkle = 0.5 + 0.5 * Math.sin(t * 0.001 * s.speed + s.phase);
-        const baseAlpha = 0.08 + twinkle * 0.12 + glow * 0.6;
-        const r = (s.r * 0.8 + glow * 1.2) * window.devicePixelRatio;
+        // 30-45% base opacity, up to 70% on hover
+        const baseAlpha = 0.3 + twinkle * 0.15 + glow * 0.35;
+        const r = (s.r * 0.9 + glow * 1.0) * window.devicePixelRatio;
         ctx.beginPath();
         ctx.arc(s.x * w, s.y * h, r, 0, Math.PI * 2);
         ctx.fillStyle = `hsla(35, 45%, 92%, ${baseAlpha})`;
@@ -153,6 +153,11 @@ export const ConstellationIntro = ({
   const tiltX = (mouse.x - 0.5) * 24;
   const tiltY = (mouse.y - 0.5) * -18;
 
+  const handleCursorSelect = useCallback(() => {
+    sfx.click();
+    setPhase("name");
+  }, []);
+
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -160,7 +165,6 @@ export const ConstellationIntro = ({
       sfx.click();
       setPhase("welcome");
 
-      // After welcome animation, exit
       setTimeout(() => {
         sfx.sparkle();
         fireFx("flowers");
@@ -182,26 +186,41 @@ export const ConstellationIntro = ({
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden"
       style={{
-        backgroundColor: "hsl(28 22% 8%)",
+        backgroundColor: "hsl(28 22% 6%)",
         opacity,
         transition: "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
       <canvas ref={canvasRef} className="absolute inset-0" />
 
-      <div className="relative z-10 flex flex-col items-center gap-8 px-6">
-        {phase === "entry" && (
+      <div className="relative z-10 flex flex-col items-center gap-6 px-6">
+        {phase === "cursor" && (
           <div
-            className="flex flex-col items-center gap-10"
-            style={{
-              animation: "introFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-            }}
+            className="flex flex-col items-center gap-8"
+            style={{ animation: "introFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
           >
-            {/* Terminal-style cursor picker */}
-            <div className="font-mono text-xs text-muted-foreground/70 tracking-wider">
-              <span className="text-primary/60">$</span> select cursor
-            </div>
-            <div className="flex gap-2">
+            {/* Glowing S orb */}
+            <button
+              onClick={handleCursorSelect}
+              className="group relative grid h-24 w-24 place-items-center rounded-full transition-transform duration-500 hover:scale-105"
+              style={{
+                background: "radial-gradient(circle, hsl(22 88% 58%) 0%, hsl(22 88% 48%) 60%, transparent 100%)",
+                boxShadow: "0 0 60px 20px hsla(22, 88%, 58%, 0.3), 0 0 120px 40px hsla(22, 88%, 58%, 0.1)",
+                animation: "orbPulse 3s ease-in-out infinite",
+              }}
+            >
+              <span className="text-3xl font-bold text-background select-none" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>S</span>
+            </button>
+
+            {/* Cursor picker pill */}
+            <div
+              className="flex items-center gap-1 rounded-full px-2 py-1.5"
+              style={{
+                background: "hsla(28, 22%, 12%, 0.8)",
+                border: "1px solid hsla(22, 88%, 58%, 0.25)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
               {CURSOR_OPTIONS.map((c) => (
                 <button
                   key={c.id}
@@ -209,40 +228,58 @@ export const ConstellationIntro = ({
                     setCursor(c.id);
                     sfx.blip();
                   }}
-                  className={`group flex flex-col items-center gap-1.5 rounded-lg px-3.5 py-2.5 transition-all duration-300 ${
-                    cursor === c.id
-                      ? "bg-primary/8 text-foreground ring-1 ring-primary/30 shadow-[0_0_20px_-8px_hsl(22_88%_58%/0.3)]"
-                      : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-secondary/30"
-                  }`}
+                  className="relative grid h-9 w-9 place-items-center rounded-full transition-all duration-300"
+                  style={{
+                    background: cursor === c.id
+                      ? "radial-gradient(circle, hsl(22 88% 58%) 0%, hsl(22 70% 45%) 100%)"
+                      : "transparent",
+                    color: cursor === c.id ? "hsl(28 22% 8%)" : "hsla(35, 45%, 80%, 0.5)",
+                    boxShadow: cursor === c.id
+                      ? "0 0 16px 4px hsla(22, 88%, 58%, 0.35)"
+                      : "none",
+                  }}
                 >
-                  <div className={`transition-transform duration-300 ${cursor === c.id ? "scale-110" : "group-hover:scale-105"}`}>
-                    {c.icon}
-                  </div>
-                  <span className="text-[9px] font-mono tracking-widest uppercase opacity-70">
-                    {c.label}
-                  </span>
+                  {c.icon}
                 </button>
               ))}
             </div>
+          </div>
+        )}
 
-            {/* Name input — terminal style */}
+        {phase === "name" && (
+          <div
+            className="flex flex-col items-center gap-8"
+            style={{ animation: "introFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
+          >
+            {/* Small S orb */}
+            <div
+              className="grid h-14 w-14 place-items-center rounded-full"
+              style={{
+                background: "radial-gradient(circle, hsl(22 88% 58%) 0%, hsl(22 88% 48%) 60%, transparent 100%)",
+                boxShadow: "0 0 40px 12px hsla(22, 88%, 58%, 0.2)",
+                animation: "orbPulse 3s ease-in-out infinite",
+              }}
+            >
+              <span className="text-xl font-bold text-background">S</span>
+            </div>
+
             <form onSubmit={handleSubmit} className="flex flex-col items-center gap-5">
-              <div className="flex items-center gap-2 font-mono text-sm">
-                <span className="text-primary/60">›</span>
-                <input
-                  autoFocus
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="your name"
-                  className="w-48 border-none bg-transparent text-center text-foreground outline-none placeholder:text-muted-foreground/30 caret-primary"
-                  style={{ caretColor: "hsl(22 88% 58%)" }}
-                />
-              </div>
-              <div className="h-px w-32 bg-gradient-to-r from-transparent via-border to-transparent" />
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="your name"
+                className="w-52 border-none bg-transparent text-center text-lg text-foreground outline-none placeholder:text-muted-foreground/30"
+                style={{
+                  caretColor: "hsl(22 88% 58%)",
+                  borderBottom: "1px solid hsla(22, 88%, 58%, 0.2)",
+                  paddingBottom: "8px",
+                }}
+              />
               <button
                 type="submit"
                 disabled={!name.trim()}
-                className="group relative rounded-full px-8 py-2.5 text-xs font-medium tracking-wider uppercase transition-all duration-500 disabled:opacity-0 disabled:translate-y-2"
+                className="rounded-full px-8 py-2 text-xs font-medium tracking-wider uppercase transition-all duration-500 disabled:opacity-0 disabled:translate-y-2"
                 style={{
                   background: name.trim()
                     ? "linear-gradient(135deg, hsl(22 88% 58%), hsl(38 95% 62%))"
@@ -253,10 +290,7 @@ export const ConstellationIntro = ({
                   color: name.trim() ? "hsl(28 22% 8%)" : "transparent",
                 }}
               >
-                <span className="relative z-10">enter</span>
-                <div className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                  style={{ background: "linear-gradient(135deg, hsl(22 88% 62%), hsl(38 95% 66%))" }}
-                />
+                enter
               </button>
             </form>
           </div>
@@ -268,7 +302,7 @@ export const ConstellationIntro = ({
             style={{
               transform: `perspective(900px) rotateY(${tiltX}deg) rotateX(${tiltY}deg) translateZ(0)`,
               transition: "transform 0.08s linear",
-              textShadow: `0 0 60px hsl(22 88% 58% / 0.3), 0 20px 60px hsl(0 0% 0% / 0.5)`,
+              textShadow: "0 0 60px hsl(22 88% 58% / 0.3), 0 20px 60px hsl(0 0% 0% / 0.5)",
               animation: "welcomeReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards",
               willChange: "transform",
             }}
@@ -286,6 +320,26 @@ export const ConstellationIntro = ({
           </h1>
         )}
       </div>
+
+      {/* Sprite fizz particles going UP */}
+      {(phase === "cursor" || phase === "name") && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: 2 + Math.random() * 3 + "px",
+                height: 2 + Math.random() * 3 + "px",
+                left: 30 + Math.random() * 40 + "%",
+                bottom: "-5%",
+                background: `hsla(22, 88%, ${55 + Math.random() * 20}%, ${0.3 + Math.random() * 0.4})`,
+                animation: `fizzUp ${3 + Math.random() * 4}s linear ${Math.random() * 3}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
