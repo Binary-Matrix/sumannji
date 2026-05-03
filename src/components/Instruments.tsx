@@ -63,27 +63,6 @@ export const Instruments = () => {
           })}
         </div>
 
-        {/* Flute video embed */}
-        <div className="mt-10 glass-strong rounded-3xl overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
-            <p className="text-base font-semibold">Suman · Flute Performance</p>
-            <a
-              href={FLUTE_REEL}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-primary hover:underline"
-            >view on Instagram ↗</a>
-          </div>
-          <div className="aspect-video w-full bg-background/50">
-            <iframe
-              src={`${FLUTE_REEL}embed`}
-              className="h-full w-full"
-              allow="encrypted-media; picture-in-picture"
-              allowFullScreen
-              title="Suman flute performance"
-            />
-          </div>
-        </div>
       </div>
 
       {/* Flute Reel modal */}

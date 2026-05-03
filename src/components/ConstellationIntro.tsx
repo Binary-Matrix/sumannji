@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { sfx } from "@/lib/sfx";
 import { fireFx } from "./FxLayer";
 
@@ -7,23 +7,42 @@ export type CursorStyle = "ember" | "comet" | "ring" | "crosshair";
 const CURSOR_OPTIONS: { id: CursorStyle; label: string; icon: JSX.Element }[] = [
   {
     id: "ember",
-    label: "Circle",
-    icon: <svg viewBox="0 0 24 24" className="h-6 w-6"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="2" fill="currentColor" /></svg>,
+    label: "circle",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5">
+        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+      </svg>
+    ),
   },
   {
     id: "crosshair",
-    label: "Crosshair",
-    icon: <svg viewBox="0 0 24 24" className="h-6 w-6"><line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" strokeWidth="1.5" /><line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="1" /></svg>,
+    label: "crosshair",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5">
+        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1" />
+        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="1" />
+        <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" strokeWidth="0.8" />
+      </svg>
+    ),
   },
   {
     id: "ring",
-    label: "Arrow",
-    icon: <svg viewBox="0 0 24 24" className="h-6 w-6"><path d="M5 3l14 9-14 9V3z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>,
+    label: "arrow",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5">
+        <path d="M5 3l14 9-14 9V3z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      </svg>
+    ),
   },
   {
     id: "comet",
-    label: "Normal",
-    icon: <svg viewBox="0 0 24 24" className="h-6 w-6"><path d="M4 4l7 17 2-7 7-2L4 4z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>,
+    label: "default",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5">
+        <path d="M4 4l7 17 2-7 7-2L4 4z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      </svg>
+    ),
   },
 ];
 
@@ -34,226 +53,236 @@ export const ConstellationIntro = ({
 }) => {
   const [name, setName] = useState("");
   const [cursor, setCursor] = useState<CursorStyle>("ember");
-  const [step, setStep] = useState<"prep" | "hold" | "welcome" | "gone">("prep");
-  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<"entry" | "welcome" | "exit">("entry");
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
-  const [holding, setHolding] = useState(false);
-  const holdRef = useRef<number | null>(null);
-  const startRef = useRef<number>(0);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [opacity, setOpacity] = useState(1);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+  const mouseRef = useRef({ x: 0.5, y: 0.5 });
 
   const stars = useMemo(
     () =>
-      Array.from({ length: 100 }, () => ({
+      Array.from({ length: 120 }, () => ({
         x: Math.random(),
         y: Math.random(),
-        r: 0.3 + Math.random() * 0.7,
-        d: Math.random() * 3,
+        r: 0.4 + Math.random() * 0.8,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.3 + Math.random() * 0.7,
       })),
     []
   );
+
+  // Canvas-based constellation for smoothness
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+    let w = 0, h = 0;
+
+    const resize = () => {
+      w = canvas.width = window.innerWidth * window.devicePixelRatio;
+      h = canvas.height = window.innerHeight * window.devicePixelRatio;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const draw = (t: number) => {
+      ctx.clearRect(0, 0, w, h);
+      const mx = mouseRef.current.x;
+      const my = mouseRef.current.y;
+
+      // Draw connections near cursor
+      for (let i = 0; i < stars.length; i++) {
+        const si = stars[i];
+        const dCi = Math.hypot(si.x - mx, si.y - my);
+        if (dCi > 0.2) continue;
+        for (let j = i + 1; j < stars.length; j++) {
+          const sj = stars[j];
+          const dCj = Math.hypot(sj.x - mx, sj.y - my);
+          if (dCj > 0.2) continue;
+          const d = Math.hypot(si.x - sj.x, si.y - sj.y);
+          if (d < 0.12) {
+            const avg = (dCi + dCj) / 2;
+            const alpha = (1 - avg / 0.2) * 0.35;
+            ctx.beginPath();
+            ctx.moveTo(si.x * w, si.y * h);
+            ctx.lineTo(sj.x * w, sj.y * h);
+            ctx.strokeStyle = `hsla(22, 88%, 58%, ${alpha})`;
+            ctx.lineWidth = 0.5 * window.devicePixelRatio;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw stars
+      for (const s of stars) {
+        const dist = Math.hypot(s.x - mx, s.y - my);
+        const glow = Math.max(0, 1 - dist * 4);
+        const twinkle = 0.5 + 0.5 * Math.sin(t * 0.001 * s.speed + s.phase);
+        const baseAlpha = 0.08 + twinkle * 0.12 + glow * 0.6;
+        const r = (s.r * 0.8 + glow * 1.2) * window.devicePixelRatio;
+        ctx.beginPath();
+        ctx.arc(s.x * w, s.y * h, r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(35, 45%, 92%, ${baseAlpha})`;
+        ctx.fill();
+      }
+
+      rafRef.current = requestAnimationFrame(draw);
+    };
+    rafRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", resize);
+    };
+  }, [stars]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       const mx = e.clientX / window.innerWidth;
       const my = e.clientY / window.innerHeight;
+      mouseRef.current = { x: mx, y: my };
       setMouse({ x: mx, y: my });
-      // 3D tilt for welcome text
-      setTilt({
-        x: (mx - 0.5) * 20,
-        y: (my - 0.5) * -15,
-      });
     };
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
-  // Constellation lines — connect near cursor, thin elegant lines
-  const lines: Array<{ a: number; b: number; opacity: number }> = [];
-  const maxDist = 0.13;
-  for (let i = 0; i < stars.length; i++) {
-    for (let j = i + 1; j < stars.length; j++) {
-      const d = Math.hypot(stars[i].x - stars[j].x, stars[i].y - stars[j].y);
-      if (d < maxDist) {
-        const mid = { x: (stars[i].x + stars[j].x) / 2, y: (stars[i].y + stars[j].y) / 2 };
-        const cursorDist = Math.hypot(mid.x - mouse.x, mid.y - mouse.y);
-        const cursorBoost = 1 - Math.min(1, cursorDist * 3.5);
-        if (cursorBoost > 0) {
-          lines.push({ a: i, b: j, opacity: 0.02 + cursorBoost * 0.4 });
-        }
-      }
-    }
-  }
+  const tiltX = (mouse.x - 0.5) * 24;
+  const tiltY = (mouse.y - 0.5) * -18;
 
-  const startHold = () => {
-    if (step !== "hold" || holding) return;
-    setHolding(true);
-    startRef.current = performance.now();
-    sfx.spaceship();
-    const tick = () => {
-      const elapsed = (performance.now() - startRef.current) / 2000;
-      const p = Math.min(elapsed, 1);
-      setProgress(p);
-      if (p < 1) {
-        holdRef.current = requestAnimationFrame(tick);
-      } else {
-        sfx.sparkle();
-        setStep("welcome");
-        setHolding(false);
-        setTimeout(() => fireFx("flowers"), 300);
-        setTimeout(() => {
-          setStep("gone");
-          onDone(name.trim() || "friend", cursor);
-        }, 2800);
-      }
-    };
-    holdRef.current = requestAnimationFrame(tick);
-  };
-
-  const cancelHold = () => {
-    if (!holding) return;
-    if (holdRef.current) cancelAnimationFrame(holdRef.current);
-    setHolding(false);
-    setProgress(0);
-  };
-
-  const goToHold = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (name.trim()) {
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!name.trim()) return;
       sfx.click();
-      setStep("hold");
-    }
-  };
+      setPhase("welcome");
 
-  if (step === "gone") return null;
+      // After welcome animation, exit
+      setTimeout(() => {
+        sfx.sparkle();
+        fireFx("flowers");
+      }, 400);
+      setTimeout(() => {
+        setPhase("exit");
+        setOpacity(0);
+      }, 2400);
+      setTimeout(() => {
+        onDone(name.trim(), cursor);
+      }, 3200);
+    },
+    [name, cursor, onDone]
+  );
+
+  if (phase === "exit" && opacity <= 0) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background overflow-hidden">
-      {/* Constellation — thin lines connecting near cursor */}
-      <svg
-        className="absolute inset-0 h-full w-full"
-        preserveAspectRatio="none"
-        viewBox="0 0 100 100"
-      >
-        {lines.map((l, k) => {
-          const sa = stars[l.a], sb = stars[l.b];
-          return (
-            <line
-              key={k}
-              x1={sa.x * 100} y1={sa.y * 100}
-              x2={sb.x * 100} y2={sb.y * 100}
-              stroke="hsl(var(--primary))"
-              strokeWidth={0.05}
-              opacity={l.opacity}
-            />
-          );
-        })}
-        {stars.map((s, i) => {
-          const dist = Math.hypot(s.x - mouse.x, s.y - mouse.y);
-          const glow = 1 - Math.min(1, dist * 3);
-          return (
-            <circle
-              key={i}
-              cx={s.x * 100}
-              cy={s.y * 100}
-              r={s.r * 0.18 + (glow > 0 ? glow * 0.12 : 0)}
-              fill="hsl(var(--foreground))"
-              opacity={0.2 + (glow > 0 ? glow * 0.6 : 0)}
-              className="animate-twinkle"
-              style={{ animationDelay: `${s.d}s` }}
-            />
-          );
-        })}
-      </svg>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden"
+      style={{
+        backgroundColor: "hsl(28 22% 8%)",
+        opacity,
+        transition: "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+      }}
+    >
+      <canvas ref={canvasRef} className="absolute inset-0" />
 
-      <div className="relative z-10 flex flex-col items-center gap-6 px-6 text-center">
-        {step === "prep" && (
-          <div className="animate-fade-up flex flex-col items-center gap-8">
-            <div className="flex gap-3">
+      <div className="relative z-10 flex flex-col items-center gap-8 px-6">
+        {phase === "entry" && (
+          <div
+            className="flex flex-col items-center gap-10"
+            style={{
+              animation: "introFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+            }}
+          >
+            {/* Terminal-style cursor picker */}
+            <div className="font-mono text-xs text-muted-foreground/70 tracking-wider">
+              <span className="text-primary/60">$</span> select cursor
+            </div>
+            <div className="flex gap-2">
               {CURSOR_OPTIONS.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => { setCursor(c.id); sfx.blip(); }}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl px-4 py-3 transition ${
+                  onClick={() => {
+                    setCursor(c.id);
+                    sfx.blip();
+                  }}
+                  className={`group flex flex-col items-center gap-1.5 rounded-lg px-3.5 py-2.5 transition-all duration-300 ${
                     cursor === c.id
-                      ? "bg-primary/10 text-foreground ring-1 ring-primary/40"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-primary/8 text-foreground ring-1 ring-primary/30 shadow-[0_0_20px_-8px_hsl(22_88%_58%/0.3)]"
+                      : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-secondary/30"
                   }`}
                 >
-                  {c.icon}
-                  <span className="text-[10px] font-medium tracking-wider uppercase">{c.label}</span>
+                  <div className={`transition-transform duration-300 ${cursor === c.id ? "scale-110" : "group-hover:scale-105"}`}>
+                    {c.icon}
+                  </div>
+                  <span className="text-[9px] font-mono tracking-widest uppercase opacity-70">
+                    {c.label}
+                  </span>
                 </button>
               ))}
             </div>
 
-            <form onSubmit={goToHold} className="flex flex-col items-center gap-4">
-              <input
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="your name"
-                className="w-64 border-b border-border bg-transparent px-2 py-3 text-center text-lg font-medium text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary"
-              />
+            {/* Name input — terminal style */}
+            <form onSubmit={handleSubmit} className="flex flex-col items-center gap-5">
+              <div className="flex items-center gap-2 font-mono text-sm">
+                <span className="text-primary/60">›</span>
+                <input
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="your name"
+                  className="w-48 border-none bg-transparent text-center text-foreground outline-none placeholder:text-muted-foreground/30 caret-primary"
+                  style={{ caretColor: "hsl(22 88% 58%)" }}
+                />
+              </div>
+              <div className="h-px w-32 bg-gradient-to-r from-transparent via-border to-transparent" />
               <button
                 type="submit"
                 disabled={!name.trim()}
-                className="rounded-full bg-ember px-8 py-3 text-sm font-semibold text-primary-foreground shadow-ember transition hover:scale-105 disabled:opacity-30"
+                className="group relative rounded-full px-8 py-2.5 text-xs font-medium tracking-wider uppercase transition-all duration-500 disabled:opacity-0 disabled:translate-y-2"
+                style={{
+                  background: name.trim()
+                    ? "linear-gradient(135deg, hsl(22 88% 58%), hsl(38 95% 62%))"
+                    : "transparent",
+                  boxShadow: name.trim()
+                    ? "0 8px 32px -8px hsl(22 88% 58% / 0.5)"
+                    : "none",
+                  color: name.trim() ? "hsl(28 22% 8%)" : "transparent",
+                }}
               >
-                enter
+                <span className="relative z-10">enter</span>
+                <div className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  style={{ background: "linear-gradient(135deg, hsl(22 88% 62%), hsl(38 95% 66%))" }}
+                />
               </button>
             </form>
           </div>
         )}
 
-        {step === "hold" && (
-          <div className="animate-fade-up flex flex-col items-center gap-6">
-            {/* 3D hovering welcome text */}
-            <h1
-              className="text-5xl font-bold text-foreground sm:text-7xl transition-transform duration-100"
-              style={{
-                transform: `perspective(800px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)`,
-                textShadow: "0 10px 30px hsl(0 0% 0% / 0.4)",
-              }}
-            >
-              welcome, <span className="text-ember">{name.trim() || "friend"}</span>
-            </h1>
-            <p className="text-sm text-muted-foreground tracking-wide">hold to enter</p>
-            <button
-              onMouseDown={startHold}
-              onTouchStart={startHold}
-              onMouseUp={cancelHold}
-              onMouseLeave={cancelHold}
-              onTouchEnd={cancelHold}
-              className={`relative h-28 w-28 rounded-full transition ${
-                holding ? "scale-105" : "hover:scale-105"
-              }`}
-              aria-label="Hold to enter"
-            >
-              <span className="absolute inset-0 rounded-full bg-ember opacity-80" />
-              <span className="relative text-2xl font-bold text-primary-foreground">SN</span>
-              <svg className="absolute inset-0" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="48" fill="none" stroke="hsl(var(--foreground))" strokeWidth="0.5" opacity="0.2" />
-                {progress > 0 && (
-                  <circle
-                    cx="50" cy="50" r="48" fill="none" stroke="hsl(var(--primary))" strokeWidth="2"
-                    strokeDasharray={`${progress * 301.6} 301.6`} transform="rotate(-90 50 50)" strokeLinecap="round"
-                  />
-                )}
-              </svg>
-            </button>
-          </div>
-        )}
-
-        {step === "welcome" && (
+        {(phase === "welcome" || phase === "exit") && (
           <h1
-            className="text-5xl font-bold sm:text-8xl transition-transform duration-100"
+            className="text-5xl font-bold sm:text-7xl lg:text-8xl select-none"
             style={{
-              transform: `perspective(800px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)`,
-              textShadow: "0 12px 40px hsl(0 0% 0% / 0.5)",
-              animation: "nameFade 2.8s ease-in-out forwards",
+              transform: `perspective(900px) rotateY(${tiltX}deg) rotateX(${tiltY}deg) translateZ(0)`,
+              transition: "transform 0.08s linear",
+              textShadow: `0 0 60px hsl(22 88% 58% / 0.3), 0 20px 60px hsl(0 0% 0% / 0.5)`,
+              animation: "welcomeReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+              willChange: "transform",
             }}
           >
-            welcome, <span className="text-ember">{name.trim() || "friend"}</span>
+            welcome,{" "}
+            <span
+              style={{
+                background: "linear-gradient(135deg, hsl(22 88% 58%), hsl(38 95% 62%))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              {name.trim()}
+            </span>
           </h1>
         )}
       </div>
