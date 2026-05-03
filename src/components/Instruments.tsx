@@ -38,7 +38,7 @@ export const Instruments = () => {
     <section className="border-t border-border/40 px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <p className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">03 · play</p>
-        <h2 className="mt-2 text-4xl font-bold sm:text-5xl">Hands on with these.</h2>
+        <h2 className="mt-2 text-4xl font-bold sm:text-5xl">Instrumental Hall</h2>
         <p className="mt-3 max-w-xl text-muted-foreground text-sm">
           Tap an instrument to hear it. More recordings coming soon.
         </p>

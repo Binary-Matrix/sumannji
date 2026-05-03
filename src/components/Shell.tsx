@@ -158,7 +158,7 @@ export const Shell = ({ visitorName }: { visitorName?: string }) => {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">01 · parth</p>
           <h2 className="mt-2 text-4xl font-bold sm:text-5xl">Talk to the system.</h2>
-          <p className="mt-3 text-muted-foreground">Parth is your helper — ask anything about Suman.</p>
+          <p className="mt-3 text-muted-foreground">It's me Parth — Suman's Son. I will walkthrough with you.</p>
           <button
             onClick={() => { setOpen(true); sfx.pop(); }}
             className="mt-6 rounded-full bg-ember px-6 py-3 font-semibold text-primary-foreground shadow-ember transition hover:scale-105"

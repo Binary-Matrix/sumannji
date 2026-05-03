@@ -187,7 +187,7 @@ export const Games = () => {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">05 · play to unlock</p>
-            <h2 className="mt-2 text-4xl font-bold sm:text-5xl">Two gates. One arena.</h2>
+            <h2 className="mt-2 text-4xl font-bold sm:text-5xl">Ranga Munch</h2>
           </div>
           <div className="glass rounded-full px-4 py-2 text-sm font-medium">
             score: <span className="text-ember">{score} pts</span>
