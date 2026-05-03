@@ -158,7 +158,10 @@ export const MusicSection = () => {
         <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">02 · the deck</p>
-            <h2 className="mt-2 text-4xl font-bold sm:text-5xl">Strings, skins &amp; breath.</h2>
+            <h2 className="mt-2 text-4xl font-bold sm:text-5xl flex items-center gap-3">
+              Sangeet Hall
+              <svg viewBox="0 0 32 32" className="h-8 w-8 text-primary/70"><path d="M16 4c-1 0-2 .5-2 1.5v14a4 4 0 104 0V8h6V5c0-.5-.5-1-1-1h-5V5.5c0 .5-.5 1-1 1s-1-.5-1-1z" fill="none" stroke="currentColor" strokeWidth="1.2"/><circle cx="12" cy="23" r="3" fill="none" stroke="currentColor" strokeWidth="1.2"/></svg>
+            </h2>
             <p className="mt-2 text-xl text-accent">music for your background experience</p>
           </div>
           <div className="glass flex gap-1 rounded-full p-1">
